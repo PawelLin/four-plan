@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4%定投法 · 定投计划生成器</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f1117; color: #e6e8ee; min-height: 100vh; padding: 12px 12px 32px;
+    font-size: 13px;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 19px; font-weight: 700; margin-bottom: 2px; letter-spacing: 0.3px; }
+  h1 span { color: #4f9cf7; }
+  .subtitle { color: #8b93a7; font-size: 11px; margin-bottom: 12px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab {
+    flex: 1; padding: 8px 10px; border: 1px solid #252a38; border-radius: 8px;
+    background: #161a24; color: #8b93a7; cursor: pointer; font-size: 13px;
+    font-weight: 500; transition: all 0.15s;
+  }
+  .tab.active { background: #1e2638; border-color: #4f9cf7; color: #e6e8ee; }
+  .tab:hover:not(.active) { border-color: #3a4258; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: #161a24; border: 1px solid #252a38; border-radius: 10px;
+    padding: 14px; margin-bottom: 10px;
+  }
+  .card h2 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #c8cfe0; }
+  .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-group { flex: 1; min-width: 110px; }
+  /* 反推：5个字段一行显示 */
+  .form-row.five { flex-wrap: nowrap; }
+  .form-row.five .form-group { flex: 1 1 0; min-width: 0; }
+  .form-group label {
+    display: block; font-size: 11px; color: #8b93a7; margin-bottom: 3px;
+    font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .form-group input {
+    width: 100%; padding: 7px 9px; background: #0f1117;
+    border: 1px solid #2c3348; border-radius: 6px; color: #e6e8ee;
+    font-size: 13px; outline: none; transition: border-color 0.15s;
+  }
+  .form-group input:focus { border-color: #4f9cf7; }
+  .form-group input::placeholder { color: #4a5166; }
+  .form-group input[readonly] { color: #6b7385; cursor: default; }
+  .btn {
+    padding: 8px 20px; background: #4f9cf7; color: #fff; border: none;
+    border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s; width: 100%;
+  }
+  .btn:hover { background: #3d87e0; }
+  .btn.secondary { background: #2c3348; }
+  .btn.secondary:hover { background: #3a4258; }
+  .results { display: none; }
+  .results.show { display: block; }
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 6px; margin-bottom: 10px;
+  }
+  .stat {
+    background: #0f1117; border: 1px solid #252a38; border-radius: 8px;
+    padding: 8px 6px; text-align: center;
+  }
+  .stat .label { font-size: 10px; color: #6b7385; margin-bottom: 2px; letter-spacing: 0.2px; }
+  .stat .value { font-size: 15px; font-weight: 700; color: #4f9cf7; font-variant-numeric: tabular-nums; }
+  .stat .value.profit { color: #ff6b6b; }
+  .stat .value.loss   { color: #3ddc84; }
+  .stat .value.yellow { color: #f7c948; }
+  .price-down { color: #3ddc84; }
+  .triggered  { color: #f7c948; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  th {
+    text-align: left; padding: 5px 7px; background: #0f1117; color: #6b7385;
+    font-weight: 600; font-size: 10px; letter-spacing: 0.2px;
+    border-bottom: 1px solid #252a38;
+  }
+  td { padding: 5px 7px; border-bottom: 1px solid #1a1f2e; color: #c8cfe0; }
+  tbody tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1a1f2e; }
+  .badge {
+    display: inline-block; padding: 1px 6px; border-radius: 20px;
+    font-size: 10px; font-weight: 600; white-space: nowrap;
+  }
+  .badge.wait { background: #2a2e1a; color: #f7c948; }
+  .badge.buy { background: #1a2e1a; color: #3ddc84; }
+  .badge.hold { background: #2e1a1a; color: #ff6b6b; }
+  .msg { padding: 8px 11px; border-radius: 6px; font-size: 12px; line-height: 1.5; margin-bottom: 8px; }
+  .msg.info { background: #1a2638; color: #8bb8f7; border: 1px solid #2a3f5c; }
+  .msg.warn { background: #2e241a; color: #f7c948; border: 1px solid #4a3a1a; }
+  .msg.profit { background: #2e1a1a; color: #ff8a8a; border: 1px solid #4a1a1a; }
+  .msg.loss   { background: #1a2e1a; color: #7ee0a8; border: 1px solid #1a4a1a; }
+  .note { font-size: 11px; color: #6b7385; line-height: 1.55; margin-top: 6px; }
+  .note code { background: #0f1117; padding: 1px 4px; border-radius: 3px; font-size: 10px; color: #8bb8f7; }
+  .save-bar { margin-top: 10px; }
+
+  /* 免责声明 */
+  .disclaimer {
+    margin-top: 18px; padding: 12px 14px;
+    background: #14171f; border: 1px solid #1f2532; border-radius: 8px;
+    font-size: 11px; color: #6b7385; line-height: 1.7;
+  }
+  .disclaimer strong { color: #8b93a7; font-weight: 600; }
+
+  /* ---------- 计划管理 ---------- */
+  .toolbar { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .toolbar .btn { width: auto; flex: 1; min-width: 110px; font-size: 12px; padding: 7px 12px; }
+  .plan-item {
+    background: #0f1117; border: 1px solid #252a38; border-radius: 8px;
+    padding: 9px 11px; margin-bottom: 7px; transition: border-color 0.15s;
+  }
+  .plan-item:hover { border-color: #3a4258; }
+  .plan-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
+  .plan-name { font-weight: 600; font-size: 13px; color: #e6e8ee; flex: 1; min-width: 80px; word-break: break-all; }
+  .plan-time { font-size: 10px; color: #6b7385; white-space: nowrap; }
+  .plan-summary { font-size: 11px; color: #8b93a7; margin-bottom: 7px; line-height: 1.5; }
+  .plan-summary .profit { color: #ff6b6b; font-weight: 600; }
+  .plan-summary .loss   { color: #3ddc84; font-weight: 600; }
+  .plan-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+  .mini-btn {
+    padding: 3px 10px; background: #1e2638; border: 1px solid #2c3348;
+    border-radius: 5px; color: #8bb8f7; font-size: 11px; cursor: pointer;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .mini-btn:hover { background: #2c3348; border-color: #3a4258; }
+  .mini-btn.primary { background: #4f9cf7; border-color: #4f9cf7; color: #fff; }
+  .mini-btn.primary:hover { background: #3d87e0; }
+  .mini-btn.danger { color: #ff6b6b; }
+  .mini-btn.danger:hover { background: #2e1a1a; border-color: #4a1a1a; }
+  .empty { text-align: center; color: #6b7385; font-size: 12px; padding: 30px 16px; line-height: 1.7; }
+
+  /* ---------- 内联编辑表单 ---------- */
+  .edit-form {
+    background: #0f1117; border: 1px solid #4f9cf7; border-radius: 8px;
+    padding: 11px; margin-bottom: 7px;
+    box-shadow: 0 0 0 2px rgba(79, 156, 247, 0.08);
+  }
+  .edit-grid { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 9px; }
+  .edit-grid .form-group { flex: 1; min-width: 105px; margin-bottom: 0; }
+  .edit-grid .form-group input {
+    width: 100%; padding: 6px 8px; background: #161a24;
+    border: 1px solid #2c3348; border-radius: 6px; color: #e6e8ee;
+    font-size: 12px; outline: none; transition: border-color 0.15s;
+  }
+  .edit-grid .form-group input:focus { border-color: #4f9cf7; }
+  .edit-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* ---------- Modal ---------- */
+  .modal-mask {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    z-index: 100; align-items: center; justify-content: center; padding: 16px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #161a24; border: 1px solid #252a38; border-radius: 10px;
+    padding: 18px; width: 100%; max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .modal h3 { font-size: 14px; margin-bottom: 4px; color: #e6e8ee; }
+  .modal .modal-sub { font-size: 11px; color: #6b7385; margin-bottom: 12px; }
+  .modal input {
+    width: 100%; padding: 8px 10px; background: #0f1117;
+    border: 1px solid #2c3348; border-radius: 6px; color: #e6e8ee;
+    font-size: 13px; outline: none; margin-bottom: 13px;
+  }
+  .modal input:focus { border-color: #4f9cf7; }
+  .modal-actions { display: flex; gap: 7px; }
+  .modal-actions .btn { font-size: 12px; padding: 7px 14px; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; bottom: 22px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1e2638; border: 1px solid #4f9cf7; color: #e6e8ee;
+    padding: 9px 18px; border-radius: 8px; font-size: 13px;
+    opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 200;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 640px) {
+    body { padding: 10px 8px 28px; font-size: 12px; }
+    h1 { font-size: 17px; }
+    .form-group { min-width: calc(50% - 4px); }
+    /* 手机端反推输入框允许换行，避免过窄 */
+    .form-row.five { flex-wrap: wrap; }
+    .form-row.five .form-group { flex: 1 1 calc(50% - 4px); min-width: calc(50% - 4px); }
+    .stat .value { font-size: 14px; }
+    table { font-size: 11px; }
+    th, td { padding: 4px 5px; }
+    th { font-size: 9px; }
+    .tab { font-size: 12px; padding: 7px 8px; }
+    .edit-grid .form-group { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📊 <span>4%定投法</span> · 计划生成器</h1>
+  <p class="subtitle">每跌4%加仓一份 · 总资金分10份 · 纯本地计算，数据不上传</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('forward')">正向生成</button>
+    <button class="tab" onclick="switchTab('reverse')">反推持仓</button>
+    <button class="tab" onclick="switchTab('saved')">我的计划<span id="saved-count"></span></button>
+  </div>
+
+  <!-- ==================== 正向生成 ==================== -->
+  <div class="panel active" id="panel-forward">
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>投资总金额（元）</label>
+          <input type="number" id="fwd-total" placeholder="100000" value="100000" min="1">
+        </div>
+        <div class="form-group">
+          <label>当前基金净值</label>
+          <input type="number" id="fwd-nav" placeholder="1.5000" value="1.5000" step="0.0001" min="0.0001">
+        </div>
+        <div class="form-group">
+          <label>单份金额（自动）</label>
+          <input type="text" id="fwd-unit" readonly>
+        </div>
+        <div class="form-group">
+          <label>跌幅度阈值（%）</label>
+          <input type="number" id="fwd-step" value="4" step="0.5" min="1" max="20">
+        </div>
+      </div>
+      <button class="btn" onclick="generateForward()">生成定投计划</button>
+    </div>
+
+    <div class="results" id="forward-results">
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><div class="label">投资总金额</div><div class="value" id="fo-total">—</div></div>
+          <div class="stat"><div class="label">单份金额</div><div class="value" id="fo-unit">—</div></div>
+          <div class="stat"><div class="label">总份数</div><div class="value" id="fo-count">—</div></div>
+          <div class="stat"><div class="label">最大可扛跌幅</div><div class="value loss" id="fo-maxdrop">—</div></div>
+        </div>
+        <p class="note" id="fo-note"></p>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>序号</th><th>触发净值</th><th>较当前跌幅</th>
+              <th>投入金额</th><th>累计投入</th><th>累计份额</th><th>平均成本</th>
+            </tr>
+          </thead>
+          <tbody id="fwd-table-body"></tbody>
+        </table>
+        <p class="note">
+          ⚠️ 首次以当前净值投入第1份作为底仓，之后每跌 <code id="fo-step-note">4%</code> 投入1份，直至10份用完。上涨时坚决不追。
+        </p>
+        <div class="save-bar">
+          <button class="btn" onclick="openSaveModal('forward')">💾 保存此计划</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 反推持仓 ==================== -->
+  <div class="panel" id="panel-reverse">
+    <div class="card">
+      <div class="form-row five">
+        <div class="form-group">
+          <label>计划总投入（元）</label>
+          <input type="number" id="rev-plan" placeholder="100000" value="100000" min="1">
+        </div>
+        <div class="form-group">
+          <label>持有份额</label>
+          <input type="number" id="rev-shares" placeholder="20000" value="20000" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>当前净值</label>
+          <input type="number" id="rev-nav" placeholder="1.5000" value="1.5000" step="0.0001" min="0.0001">
+        </div>
+        <div class="form-group">
+          <label>剩余资金（元）</label>
+          <input type="number" id="rev-remain" placeholder="70000" value="70000" min="0">
+        </div>
+        <div class="form-group">
+          <label>跌幅阈值（%）</label>
+          <input type="number" id="rev-step" value="4" step="0.5" min="1" max="20">
+        </div>
+      </div>
+      <button class="btn" onclick="generateReverse()">反推定投计划</button>
+    </div>
+
+    <div class="results" id="reverse-results">
+      <div class="card">
+        <div class="stats">
+          <div class="stat"><div class="label">已投入金额</div><div class="value" id="ro-invested">—</div></div>
+          <div class="stat"><div class="label">当前市值</div><div class="value" id="ro-market">—</div></div>
+          <div class="stat"><div class="label">持仓盈亏</div><div class="value" id="ro-pnl">—</div></div>
+          <div class="stat"><div class="label">收益率</div><div class="value" id="ro-return">—</div></div>
+          <div class="stat"><div class="label">平均成本</div><div class="value" id="ro-cost">—</div></div>
+          <div class="stat"><div class="label">已用 / 剩余份数</div><div class="value yellow" id="ro-units">—</div></div>
+        </div>
+        <div class="msg info" id="ro-status"></div>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>序号</th><th>触发净值</th><th>较平均成本跌幅</th>
+              <th>较当前净值跌幅</th><th>投入金额</th><th>累计投入</th>
+            </tr>
+          </thead>
+          <tbody id="rev-table-body"></tbody>
+        </table>
+        <p class="note" id="rev-note"></p>
+        <div class="save-bar">
+          <button class="btn" onclick="openSaveModal('reverse')">💾 保存此计划</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 我的计划 ==================== -->
+  <div class="panel" id="panel-saved">
+    <div class="card">
+      <div class="toolbar">
+        <button class="btn secondary" onclick="exportPlans()">⬇ 导出全部</button>
+        <button class="btn secondary" onclick="document.getElementById('import-file').click()">⬆ 导入计划</button>
+        <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importPlans(event)">
+      </div>
+      <div id="saved-list"></div>
+    </div>
+  </div>
+
+  <!-- 免责声明 -->
+  <div class="disclaimer">
+    <strong>免责声明：</strong>本工具为纯前端计算器，所有计算均在您的浏览器本地完成，不会上传、收集或存储任何数据。
+    计算结果仅供学习与参考，不构成任何投资建议、收益承诺或买卖推荐。
+    基金投资有风险，过往业绩不代表未来表现，请根据自身风险承受能力独立判断，谨慎决策。
+  </div>
+</div>
+
+<!-- 保存计划弹窗 -->
+<div class="modal-mask" id="save-modal">
+  <div class="modal">
+    <h3>保存计划</h3>
+    <p class="modal-sub">为这个计划起一个便于识别的名字</p>
+    <input type="text" id="save-name" maxlength="40" placeholder="例如：沪深300 · 10万底仓计划">
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeSaveModal()">取消</button>
+      <button class="btn" onclick="confirmSave()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   4%定投法 计划生成器
+   颜色约定（中国习惯）：
+   - 盈利 / 上涨 → 红色 (#ff6b6b)
+   - 亏损 / 下跌 → 绿色 (#3ddc84)
+   - 已触发      → 黄色 (#f7c948)
+   ================================================================ */
+
+const STORAGE_KEY = 'fund_plan_v1';
+
+function formatMoney(n) {
+  if (n === undefined || n === null || isNaN(n)) return '—';
+  return '¥' + n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatPct(n) {
+  if (n === undefined || n === null || isNaN(n)) return '—';
+  return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+}
+function formatTime(ts) {
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+function toast(text) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ================================================================
+   正向生成计划
+   ================================================================ */
+function generateForward() {
+  const total = parseFloat(document.getElementById('fwd-total').value);
+  const nav = parseFloat(document.getElementById('fwd-nav').value);
+  const stepPct = parseFloat(document.getElementById('fwd-step').value);
+
+  if (!total || total <= 0) return toast('请输入有效的投资总金额');
+  if (!nav || nav <= 0) return toast('请输入有效的基金净值');
+  if (!stepPct || stepPct <= 0 || stepPct > 50) return toast('跌幅度阈值应在 0~50% 之间');
+
+  const count = 10;
+  const unit = total / count;
+  const step = stepPct / 100;
+
+  const rows = [];
+  let cumAmount = 0, cumShares = 0;
+  for (let i = 1; i <= count; i++) {
+    const buyNav = nav * Math.pow(1 - step, i - 1);
+    const shares = unit / buyNav;
+    cumAmount += unit;
+    cumShares += shares;
+    rows.push({
+      index: i, buyNav,
+      dropFromCurrent: ((nav - buyNav) / nav) * 100,
+      amount: unit, cumAmount, cumShares,
+      avgCost: cumAmount / cumShares
+    });
+  }
+
+  document.getElementById('fo-total').textContent = formatMoney(total);
+  document.getElementById('fo-unit').textContent = formatMoney(unit);
+  document.getElementById('fo-count').textContent = count + ' 份';
+  document.getElementById('fo-maxdrop').textContent = ((count - 1) * stepPct).toFixed(1) + '%';
+  document.getElementById('fo-step-note').textContent = stepPct + '%';
+
+  document.getElementById('fo-note').innerHTML =
+    `首次以当前净值 <code>${nav.toFixed(4)}</code> 投入第1份，之后每下跌 <code>${stepPct}%</code> 加仓1份。` +
+    `全部用完时，基金从首次买入点累计下跌 <code>${((count - 1) * stepPct).toFixed(1)}%</code>，` +
+    `这是该策略的最大可承受跌幅。`;
+
+  document.getElementById('fwd-table-body').innerHTML = rows.map(r => `
+    <tr>
+      <td><span class="badge ${r.index === 1 ? 'buy' : 'wait'}">${r.index === 1 ? '建仓' : '第' + r.index + '份'}</span></td>
+      <td>${r.buyNav.toFixed(4)}</td>
+      <td class="price-down">-${r.dropFromCurrent.toFixed(2)}%</td>
+      <td>${formatMoney(r.amount)}</td>
+      <td>${formatMoney(r.cumAmount)}</td>
+      <td>${r.cumShares.toFixed(2)}</td>
+      <td>${r.avgCost.toFixed(4)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('forward-results').classList.add('show');
+}
+
+/* ================================================================
+   反推现有持仓
+   逻辑：
+   1. 单份金额 = 计划总投入 / 10
+   2. 已投入金额 = 计划总投入 - 剩余可用资金
+   3. 平均成本 = 已投入金额 / 持有份额
+   4. 已用份数 = round(已投入金额 / 单份金额)
+   5. 剩余份数 = 10 - 已用份数
+   6. 从平均成本往下，每跌 step% 计算一个触发价
+   ================================================================ */
+function generateReverse() {
+  const planTotal = parseFloat(document.getElementById('rev-plan').value);
+  const shares = parseFloat(document.getElementById('rev-shares').value);
+  const nav = parseFloat(document.getElementById('rev-nav').value);
+  const remain = parseFloat(document.getElementById('rev-remain').value);
+  const stepPct = parseFloat(document.getElementById('rev-step').value);
+
+  if (!planTotal || planTotal <= 0) return toast('请输入有效的计划总投入金额');
+  if (!shares || shares <= 0) return toast('请输入有效的持有份额');
+  if (!nav || nav <= 0) return toast('请输入有效的当前净值');
+  if (isNaN(remain) || remain < 0) return toast('请输入有效的剩余可用资金');
+  if (remain >= planTotal) return toast('剩余可用资金应小于计划总投入金额');
+  if (!stepPct || stepPct <= 0 || stepPct > 50) return toast('跌幅度阈值应在 0~50% 之间');
+
+  const invested = planTotal - remain;
+  const unit = planTotal / 10;
+  const marketValue = shares * nav;
+  const pnl = marketValue - invested;
+  const returnPct = (pnl / invested) * 100;
+  const avgCost = invested / shares;
+  const step = stepPct / 100;
+
+  const usedUnits = Math.round(invested / unit);
+  const remainUnits = Math.max(0, 10 - usedUnits);
+
+  const pnlCls = pnl >= 0 ? 'profit' : 'loss';
+  const returnCls = returnPct >= 0 ? 'profit' : 'loss';
+
+  document.getElementById('ro-invested').textContent = formatMoney(invested);
+  document.getElementById('ro-market').textContent = formatMoney(marketValue);
+  document.getElementById('ro-pnl').textContent = formatMoney(pnl);
+  document.getElementById('ro-pnl').className = 'value ' + pnlCls;
+  document.getElementById('ro-return').textContent = formatPct(returnPct);
+  document.getElementById('ro-return').className = 'value ' + returnCls;
+  document.getElementById('ro-cost').textContent = avgCost.toFixed(4);
+  document.getElementById('ro-units').textContent = `${usedUnits} / ${remainUnits}`;
+
+  const statusEl = document.getElementById('ro-status');
+  if (pnl >= 0) {
+    statusEl.className = 'msg profit';
+    statusEl.innerHTML = `当前盈利 <strong>${formatMoney(pnl)}</strong>（${formatPct(returnPct)}）。收益超15%后，从最高点回撤4%时止盈。`;
+  } else {
+    const dropFromCost = ((avgCost - nav) / avgCost) * 100;
+    statusEl.className = 'msg loss';
+    statusEl.innerHTML = `当前亏损 <strong>${formatMoney(Math.abs(pnl))}</strong>（${formatPct(returnPct)}），净值较平均成本下跌 <strong>${dropFromCost.toFixed(2)}%</strong>。`;
+  }
+
+  const rows = [];
+  let cumAmount = invested;
+  for (let i = 1; i <= remainUnits; i++) {
+    const buyNav = avgCost * Math.pow(1 - step, i);
+    cumAmount += unit;
+    rows.push({
+      index: usedUnits + i,
+      buyNav,
+      dropFromCost: ((avgCost - buyNav) / avgCost) * 100,
+      dropFromCurrent: ((nav - buyNav) / nav) * 100,
+      amount: unit,
+      cumAmount
+    });
+  }
+
+  const tbody = document.getElementById('rev-table-body');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#6b7385;padding:16px">
+      已满10份，无剩余加仓计划。
+    </td></tr>`;
+    document.getElementById('rev-note').textContent = '';
+  } else {
+    tbody.innerHTML = rows.map(r => {
+      const isTriggered = r.dropFromCurrent <= 0;
+      const dropCell = isTriggered
+        ? `<span class="triggered">已触发</span>`
+        : `<span class="price-down">-${r.dropFromCurrent.toFixed(2)}%</span>`;
+      return `
+        <tr>
+          <td><span class="badge wait">第${r.index}份</span></td>
+          <td>${r.buyNav.toFixed(4)}</td>
+          <td class="price-down">-${r.dropFromCost.toFixed(2)}%</td>
+          <td>${dropCell}</td>
+          <td>${formatMoney(r.amount)}</td>
+          <td>${formatMoney(r.cumAmount)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    document.getElementById('rev-note').innerHTML =
+      `单份金额 = 计划总投入 ÷ 10 = <code>${formatMoney(unit)}</code>，` +
+      `已用 <code>${usedUnits}</code> 份，剩余 <code>${remainUnits}</code> 次加仓。` +
+      `触发价以平均成本 <code>${avgCost.toFixed(4)}</code> 为基准，每跌 <code>${stepPct}%</code> 计算。`;
+  }
+
+  document.getElementById('reverse-results').classList.add('show');
+}
+
+/* ================================================================
+   Tab 切换
+   ================================================================ */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'saved') renderSavedPlans();
+}
+
+/* ================================================================
+   本地存储
+   ================================================================ */
+function loadPlans() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(arr)) return [];
+    let changed = false;
+    arr.forEach(p => {
+      if (p.type === 'reverse' && p.inputs && p.inputs.planTotal === undefined && p.inputs.invested !== undefined) {
+        p.inputs.planTotal = Number(p.inputs.invested) + Number(p.inputs.remain || 0);
+        delete p.inputs.invested;
+        changed = true;
+      }
+    });
+    if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    return arr;
+  } catch (e) { return []; }
+}
+function persistPlans(plans) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+  } catch (e) {
+    alert('保存失败：浏览器存储空间不足或被禁用');
+    return false;
+  }
+  renderSavedPlans();
+  updateSavedCount();
+  return true;
+}
+function updateSavedCount() {
+  const n = loadPlans().length;
+  document.getElementById('saved-count').textContent = n ? ` (${n})` : '';
+}
+
+function collectInputs(type) {
+  if (type === 'forward') {
+    return {
+      total: document.getElementById('fwd-total').value,
+      nav: document.getElementById('fwd-nav').value,
+      step: document.getElementById('fwd-step').value
+    };
+  }
+  return {
+    planTotal: document.getElementById('rev-plan').value,
+    shares: document.getElementById('rev-shares').value,
+    nav: document.getElementById('rev-nav').value,
+    remain: document.getElementById('rev-remain').value,
+    step: document.getElementById('rev-step').value
+  };
+}
+
+function buildSummary(type, inputs) {
+  if (type === 'forward') {
+    const total = Number(inputs.total) || 0;
+    const unit = total / 10;
+    return `总金额 ${formatMoney(total)} · 单份 ${formatMoney(unit)} · 当前净值 ${inputs.nav} · 每跌 ${inputs.step}% 加仓`;
+  }
+  const planTotal = Number(inputs.planTotal) || 0;
+  const remain = Number(inputs.remain) || 0;
+  const shares = Number(inputs.shares) || 0;
+  const nav = Number(inputs.nav) || 0;
+  const invested = planTotal - remain;
+  const cost = shares > 0 ? invested / shares : 0;
+  const pnlPct = invested > 0 ? ((shares * nav - invested) / invested) * 100 : 0;
+  return `计划 ${formatMoney(planTotal)} · 已投 ${formatMoney(invested)} · 平均成本 ${cost.toFixed(4)} · 盈亏 ${formatPct(pnlPct)} · 剩余 ${formatMoney(remain)}`;
+}
+
+function buildSummaryHtml(type, inputs) {
+  if (!inputs) return '';
+  if (type === 'forward') {
+    const total = Number(inputs.total) || 0;
+    const unit = total / 10;
+    return `总金额 ${formatMoney(total)} · 单份 ${formatMoney(unit)} · 当前净值 ${escapeHtml(inputs.nav)} · 每跌 ${escapeHtml(inputs.step)}% 加仓`;
+  }
+  const planTotal = Number(inputs.planTotal) || 0;
+  const remain = Number(inputs.remain) || 0;
+  const shares = Number(inputs.shares) || 0;
+  const nav = Number(inputs.nav) || 0;
+  const invested = planTotal - remain;
+  const cost = shares > 0 ? invested / shares : 0;
+  const pnl = shares * nav - invested;
+  const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
+  const cls = pnl >= 0 ? 'profit' : 'loss';
+  const pnlHtml = `<span class="${cls}">${formatPct(pnlPct)}</span>`;
+  return `计划 ${formatMoney(planTotal)} · 已投 ${formatMoney(invested)} · 平均成本 ${cost.toFixed(4)} · 盈亏 ${pnlHtml} · 剩余 ${formatMoney(remain)}`;
+}
+
+/* ================================================================
+   保存计划
+   ================================================================ */
+let pendingSaveType = null;
+
+function openSaveModal(type) {
+  pendingSaveType = type;
+  const now = new Date();
+  const p = n => String(n).padStart(2, '0');
+  const defName = (type === 'forward' ? '正向计划' : '反推计划') +
+    ` ${p(now.getMonth() + 1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}`;
+  const input = document.getElementById('save-name');
+  input.value = defName;
+  document.getElementById('save-modal').classList.add('show');
+  setTimeout(() => { input.focus(); input.select(); }, 60);
+}
+
+function closeSaveModal() {
+  document.getElementById('save-modal').classList.remove('show');
+  pendingSaveType = null;
+}
+
+function confirmSave() {
+  const name = document.getElementById('save-name').value.trim();
+  if (!name) { toast('请输入计划名称'); return; }
+  if (!pendingSaveType) return;
+
+  const inputs = collectInputs(pendingSaveType);
+  const plans = loadPlans();
+  plans.unshift({
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    name,
+    type: pendingSaveType,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    inputs,
+    summary: buildSummary(pendingSaveType, inputs)
+  });
+
+  if (persistPlans(plans)) {
+    closeSaveModal();
+    toast('计划已保存 ✅');
+  }
+}
+
+/* ================================================================
+   计划列表
+   ================================================================ */
+let editingId = null;
+
+function renderSavedPlans() {
+  const plans = loadPlans();
+  const list = document.getElementById('saved-list');
+
+  if (plans.length === 0) {
+    editingId = null;
+    list.innerHTML = `<div class="empty">
+      还没有保存的计划<br>
+      <span style="font-size:11px">生成计划后，点击底部的「💾 保存此计划」即可</span>
+    </div>`;
+    return;
+  }
+  if (editingId && !plans.some(p => p.id === editingId)) editingId = null;
+
+  list.innerHTML = plans.map(p =>
+    p.id === editingId ? renderEditForm(p) : renderPlanItem(p)
+  ).join('');
+}
+
+function renderPlanItem(p) {
+  const timeText = (p.updatedAt && p.updatedAt !== p.createdAt)
+    ? formatTime(p.updatedAt) + ' 已更新'
+    : formatTime(p.createdAt);
+  const summaryHtml = p.inputs ? buildSummaryHtml(p.type, p.inputs) : escapeHtml(p.summary || '');
+  return `
+    <div class="plan-item">
+      <div class="plan-head">
+        <span class="badge ${p.type === 'forward' ? 'buy' : 'wait'}">${p.type === 'forward' ? '正向' : '反推'}</span>
+        <span class="plan-name">${escapeHtml(p.name)}</span>
+        <span class="plan-time">${timeText}</span>
+      </div>
+      <div class="plan-summary">${summaryHtml}</div>
+      <div class="plan-actions">
+        <button class="mini-btn" onclick="loadPlan('${p.id}')">↩ 加载</button>
+        <button class="mini-btn primary" onclick="startEdit('${p.id}')">✎ 编辑</button>
+        <button class="mini-btn" onclick="duplicatePlan('${p.id}')">⧉ 复制</button>
+        <button class="mini-btn danger" onclick="deletePlan('${p.id}')">✕ 删除</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ================================================================
+   内联编辑
+   ================================================================ */
+function renderEditForm(p) {
+  const i = p.inputs || {};
+  const isFwd = p.type === 'forward';
+
+  const fields = isFwd ? `
+    <div class="form-group">
+      <label>投资总金额（元）</label>
+      <input type="number" id="edit-a" value="${escapeHtml(i.total ?? '')}" min="1" step="any">
+    </div>
+    <div class="form-group">
+      <label>当前基金净值</label>
+      <input type="number" id="edit-b" value="${escapeHtml(i.nav ?? '')}" min="0.0001" step="0.0001">
+    </div>
+    <div class="form-group">
+      <label>跌幅度阈值（%）</label>
+      <input type="number" id="edit-c" value="${escapeHtml(i.step ?? 4)}" min="1" max="20" step="0.5">
+    </div>
+  ` : `
+    <div class="form-group">
+      <label>计划总投入金额（元）</label>
+      <input type="number" id="edit-a" value="${escapeHtml(i.planTotal ?? '')}" min="1" step="any">
+    </div>
+    <div class="form-group">
+      <label>当前持有份额</label>
+      <input type="number" id="edit-b" value="${escapeHtml(i.shares ?? '')}" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>当前基金净值</label>
+      <input type="number" id="edit-c" value="${escapeHtml(i.nav ?? '')}" min="0.0001" step="0.0001">
+    </div>
+    <div class="form-group">
+      <label>剩余可用资金（元）</label>
+      <input type="number" id="edit-d" value="${escapeHtml(i.remain ?? '')}" min="0" step="any">
+    </div>
+    <div class="form-group">
+      <label>跌幅度阈值（%）</label>
+      <input type="number" id="edit-e" value="${escapeHtml(i.step ?? 4)}" min="1" max="20" step="0.5">
+    </div>
+  `;
+
+  return `
+    <div class="edit-form">
+      <div class="plan-head" style="margin-bottom:9px">
+        <span class="badge ${isFwd ? 'buy' : 'wait'}">${isFwd ? '正向' : '反推'}</span>
+        <span style="font-size:12px;color:#8b93a7;flex:1">正在编辑</span>
+      </div>
+      <div class="edit-grid">
+        <div class="form-group" style="flex-basis:100%">
+          <label>计划名称</label>
+          <input type="text" id="edit-name" value="${escapeHtml(p.name)}" maxlength="40" placeholder="计划名称">
+        </div>
+        ${fields}
+      </div>
+      <div class="edit-actions">
+        <button class="mini-btn primary" onclick="saveEdit('${p.id}', false)">✓ 保存</button>
+        <button class="mini-btn" onclick="saveEdit('${p.id}', true)">✓ 保存并加载</button>
+        <button class="mini-btn" onclick="cancelEdit()">取消</button>
+      </div>
+    </div>
+  `;
+}
+
+function startEdit(id) {
+  editingId = id;
+  renderSavedPlans();
+  const el = document.querySelector('.edit-form');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const nameInput = document.getElementById('edit-name');
+  if (nameInput) { nameInput.focus(); nameInput.select(); }
+}
+
+function cancelEdit() {
+  editingId = null;
+  renderSavedPlans();
+}
+
+function saveEdit(id, andLoad) {
+  const plans = loadPlans();
+  const p = plans.find(x => x.id === id);
+  if (!p) { toast('计划不存在'); return; }
+
+  const name = (document.getElementById('edit-name').value || '').trim();
+  if (!name) { toast('计划名称不能为空'); return; }
+
+  let inputs;
+  if (p.type === 'forward') {
+    const total = parseFloat(document.getElementById('edit-a').value);
+    const nav = parseFloat(document.getElementById('edit-b').value);
+    const stepV = parseFloat(document.getElementById('edit-c').value);
+    if (!total || total <= 0) return toast('请输入有效的投资总金额');
+    if (!nav || nav <= 0) return toast('请输入有效的基金净值');
+    if (!stepV || stepV <= 0 || stepV > 50) return toast('跌幅度阈值应在 0~50% 之间');
+    inputs = { total, nav, step: stepV };
+  } else {
+    const planTotal = parseFloat(document.getElementById('edit-a').value);
+    const shares = parseFloat(document.getElementById('edit-b').value);
+    const nav = parseFloat(document.getElementById('edit-c').value);
+    const remain = parseFloat(document.getElementById('edit-d').value);
+    const stepV = parseFloat(document.getElementById('edit-e').value);
+    if (!planTotal || planTotal <= 0) return toast('请输入有效的计划总投入金额');
+    if (!shares || shares <= 0) return toast('请输入有效的持有份额');
+    if (!nav || nav <= 0) return toast('请输入有效的当前净值');
+    if (isNaN(remain) || remain < 0) return toast('请输入有效的剩余可用资金');
+    if (remain >= planTotal) return toast('剩余可用资金应小于计划总投入金额');
+    if (!stepV || stepV <= 0 || stepV > 50) return toast('跌幅度阈值应在 0~50% 之间');
+    inputs = { planTotal, shares, nav, remain, step: stepV };
+  }
+
+  p.name = name;
+  p.inputs = inputs;
+  p.summary = buildSummary(p.type, inputs);
+  p.updatedAt = Date.now();
+  editingId = null;
+  persistPlans(plans);
+
+  if (andLoad) {
+    loadPlan(id, true);
+    toast('已更新并加载 ✅');
+  } else {
+    toast('计划已更新 ✅');
+  }
+}
+
+/* ================================================================
+   加载 / 复制 / 删除
+   ================================================================ */
+function loadPlan(id, silent) {
+  const plans = loadPlans();
+  const p = plans.find(x => x.id === id);
+  if (!p) { toast('计划不存在'); return; }
+
+  editingId = null;
+
+  if (p.type === 'forward') {
+    document.getElementById('fwd-total').value = p.inputs.total ?? '';
+    document.getElementById('fwd-nav').value = p.inputs.nav ?? '';
+    document.getElementById('fwd-step').value = p.inputs.step ?? 4;
+    document.getElementById('fwd-total').dispatchEvent(new Event('input'));
+    switchTab('forward');
+    generateForward();
+  } else {
+    document.getElementById('rev-plan').value = p.inputs.planTotal ?? '';
+    document.getElementById('rev-shares').value = p.inputs.shares ?? '';
+    document.getElementById('rev-nav').value = p.inputs.nav ?? '';
+    document.getElementById('rev-remain').value = p.inputs.remain ?? '';
+    document.getElementById('rev-step').value = p.inputs.step ?? 4;
+    switchTab('reverse');
+    generateReverse();
+  }
+  if (!silent) toast('已加载：' + p.name);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function duplicatePlan(id) {
+  const plans = loadPlans();
+  const p = plans.find(x => x.id === id);
+  if (!p) return;
+  const now = Date.now();
+  plans.unshift({
+    id: 'p_' + now + '_' + Math.random().toString(36).slice(2, 7),
+    name: p.name + ' 副本',
+    type: p.type,
+    createdAt: now, updatedAt: now,
+    inputs: JSON.parse(JSON.stringify(p.inputs)),
+    summary: p.summary
+  });
+  persistPlans(plans);
+  toast('已创建副本');
+}
+
+function deletePlan(id) {
+  const plans = loadPlans();
+  const p = plans.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`确定删除计划「${p.name}」吗？`)) return;
+  if (editingId === id) editingId = null;
+  persistPlans(plans.filter(x => x.id !== id));
+  toast('已删除');
+}
+
+/* ================================================================
+   导入 / 导出
+   ================================================================ */
+function exportPlans() {
+  const plans = loadPlans();
+  if (plans.length === 0) { toast('暂无计划可导出'); return; }
+  const payload = {
+    app: '4%定投法计划生成器', version: 1,
+    exportedAt: new Date().toISOString(), plans
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  a.href = url;
+  a.download = `定投计划_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`已导出 ${plans.length} 个计划`);
+}
+
+function importPlans(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    let data;
+    try { data = JSON.parse(ev.target.result); }
+    catch (e) { alert('导入失败：文件不是有效的 JSON'); return; }
+
+    const incoming = Array.isArray(data) ? data : (data && Array.isArray(data.plans) ? data.plans : null);
+    if (!incoming) { alert('导入失败：未找到计划数据'); return; }
+
+    const plans = loadPlans();
+    let added = 0;
+    incoming.forEach(p => {
+      if (!p || !p.name || !p.type || !p.inputs) return;
+      if (p.type !== 'forward' && p.type !== 'reverse') return;
+      if (p.type === 'reverse' && p.inputs.planTotal === undefined && p.inputs.invested !== undefined) {
+        p.inputs.planTotal = Number(p.inputs.invested) + Number(p.inputs.remain || 0);
+        delete p.inputs.invested;
+      }
+      plans.unshift({
+        id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        name: String(p.name).slice(0, 40),
+        type: p.type,
+        createdAt: p.createdAt || Date.now(),
+        updatedAt: Date.now(),
+        inputs: p.inputs,
+        summary: p.summary || buildSummary(p.type, p.inputs)
+      });
+      added++;
+    });
+
+    if (added === 0) { alert('导入失败：没有可用的计划数据'); return; }
+    persistPlans(plans);
+    toast(`成功导入 ${added} 个计划 ✅`);
+  };
+  reader.readAsText(file);
+}
+
+/* ================================================================
+   初始化
+   ================================================================ */
+document.getElementById('fwd-total').addEventListener('input', function () {
+  const total = parseFloat(this.value);
+  document.getElementById('fwd-unit').value = (total && total > 0) ? formatMoney(total / 10) : '';
+});
+document.getElementById('fwd-total').dispatchEvent(new Event('input'));
+
+document.getElementById('fwd-nav').addEventListener('keydown', e => { if (e.key === 'Enter') generateForward(); });
+document.getElementById('rev-nav').addEventListener('keydown', e => { if (e.key === 'Enter') generateReverse(); });
+document.getElementById('save-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmSave();
+  if (e.key === 'Escape') closeSaveModal();
+});
+document.getElementById('save-modal').addEventListener('click', e => {
+  if (e.target.id === 'save-modal') closeSaveModal();
+});
+
+document.addEventListener('keydown', e => {
+  if (!editingId) return;
+  if (e.key === 'Escape') { cancelEdit(); return; }
+  if (e.key === 'Enter' && e.target && e.target.closest && e.target.closest('.edit-form')) {
+    e.preventDefault();
+    saveEdit(editingId, false);
+  }
+});
+
+renderSavedPlans();
+updateSavedCount();
+</script>
+</body>
+</html>
