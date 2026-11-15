@@ -1,369 +1,744 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>三拼组合 · 可重复 · 8 种食材</title>
-<style>
-  * { box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>三拼组合 · 可重复 · 筛选版</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  body {
-    margin: 0;
-    min-height: 100vh;
-    padding: 32px 20px 70px;
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
-                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    background: radial-gradient(circle at 15% 0%, #fff6ea 0%, #faf6f0 45%, #f4efe7 100%);
-    color: #3a3229;
-  }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 32px 20px 70px;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at 15% 0%, #fff6ea 0%, #faf6f0 45%, #f4efe7 100%);
+      color: #3a3229;
+    }
 
-  .wrap { max-width: 1180px; margin: 0 auto; }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
 
-  header h1 {
-    margin: 0 0 8px;
-    font-size: 27px;
-    letter-spacing: 2px;
-    font-weight: 700;
-  }
-  header h1 span { color: #c8553d; }
-  .sub {
-    margin: 0;
-    font-size: 14px;
-    color: #9a8b78;
-    letter-spacing: .5px;
-    line-height: 1.7;
-  }
-  .sub b { color: #c8553d; font-weight: 600; }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 27px;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
 
-  /* ===== 工具栏 ===== */
-  .toolbar {
-    position: sticky;
-    top: 12px;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin: 22px 0 18px;
-    padding: 12px 16px;
-    background: rgba(255, 255, 255, .82);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid #eee2d3;
-    border-radius: 14px;
-    box-shadow: 0 6px 20px rgba(120, 90, 60, .07);
-  }
-  .count {
-    font-size: 14px;
-    color: #7d6f5e;
-    margin-right: auto;
-  }
-  .count b {
-    color: #c8553d;
-    font-size: 17px;
-    font-variant-numeric: tabular-nums;
-    padding: 0 2px;
-  }
-  .btn {
-    appearance: none;
-    border: 1.5px solid #e2d3bd;
-    background: #fff;
-    color: #6b5d4c;
-    font-size: 13.5px;
-    font-family: inherit;
-    padding: 7px 16px;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: all .16s ease;
-  }
-  .btn:hover {
-    border-color: #c8553d;
-    color: #c8553d;
-    background: #fdf3ef;
-  }
-  .btn:active { transform: scale(.96); }
+    header h1 span {
+      color: #c8553d;
+    }
 
-  /* ===== 组合网格 ===== */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 12px;
-  }
+    .sub {
+      margin: 0;
+      font-size: 14px;
+      color: #9a8b78;
+      letter-spacing: .5px;
+      line-height: 1.7;
+    }
 
-  .card {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 12px 14px;
-    background: #fff;
-    border: 1.5px solid #ece1d1;
-    border-radius: 12px;
-    cursor: pointer;
-    user-select: none;
-    transition: border-color .16s, background .16s, box-shadow .16s, transform .16s;
-  }
-  .card:hover {
-    border-color: #e0c9ac;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(120, 90, 60, .09);
-  }
-  .card.on {
-    border-color: #c8553d;
-    background: #fdf3ef;
-  }
+    .sub b {
+      color: #c8553d;
+      font-weight: 600;
+    }
 
-  /* 自定义复选框 */
-  .card input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
-    margin: 0;
-    border: 2px solid #d8c9b4;
-    border-radius: 5px;
-    background: #fff;
-    position: relative;
-    cursor: pointer;
-    transition: background .16s, border-color .16s;
-  }
-  .card input[type="checkbox"]:checked {
-    background: #c8553d;
-    border-color: #c8553d;
-  }
-  .card input[type="checkbox"]:checked::after {
-    content: "";
-    position: absolute;
-    left: 4.5px;
-    top: 1px;
-    width: 4px;
-    height: 8.5px;
-    border: solid #fff;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-  }
+    /* ===== 工具栏 ===== */
+    .toolbar {
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 22px 0 12px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid #eee2d3;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(120, 90, 60, .07);
+    }
 
-  .num {
-    flex: 0 0 auto;
-    font-size: 11.5px;
-    font-variant-numeric: tabular-nums;
-    color: #bcae9b;
-    letter-spacing: .5px;
-  }
-  .card.on .num { color: #d79a8b; }
+    .count {
+      font-size: 14px;
+      color: #7d6f5e;
+      margin-right: auto;
+    }
 
-  .names {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
-    font-size: 14.5px;
-    line-height: 1.45;
-  }
-  .names .ing { font-weight: 500; }
-  .card.on .names .ing { color: #a8412c; }
-  .names .plus { color: #c9b8a2; font-size: 12px; }
+    .count b {
+      color: #c8553d;
+      font-size: 17px;
+      font-variant-numeric: tabular-nums;
+      padding: 0 2px;
+    }
 
-  footer {
-    margin-top: 34px;
-    text-align: center;
-    font-size: 12.5px;
-    color: #b7a894;
-    letter-spacing: .5px;
-  }
-</style>
+    .btn {
+      appearance: none;
+      border: 1.5px solid #e2d3bd;
+      background: #fff;
+      color: #6b5d4c;
+      font-size: 13.5px;
+      font-family: inherit;
+      padding: 7px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all .16s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      border-color: #c8553d;
+      color: #c8553d;
+      background: #fdf3ef;
+    }
+
+    .btn:active {
+      transform: scale(.96);
+    }
+
+    /* ===== 筛选区 ===== */
+    .filters {
+      margin: 0 0 18px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid #eee2d3;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(120, 90, 60, .07);
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-row+.filter-row {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #eee2d3;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      color: #9a8b78;
+      margin-right: 2px;
+      letter-spacing: .5px;
+      flex: 0 0 auto;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      appearance: none;
+      border: 1.5px solid #e2d3bd;
+      background: #fff;
+      color: #6b5d4c;
+      font-size: 13px;
+      font-family: inherit;
+      padding: 5px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all .16s ease;
+    }
+
+    .chip:hover {
+      border-color: #c8553d;
+      color: #c8553d;
+    }
+
+    .chip.on {
+      background: #c8553d;
+      border-color: #c8553d;
+      color: #fff;
+    }
+
+    .seg {
+      display: inline-flex;
+      background: #f5eee4;
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .seg-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: #7d6f5e;
+      font-size: 13px;
+      font-family: inherit;
+      padding: 5px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all .16s ease;
+      white-space: nowrap;
+    }
+
+    .seg-btn:hover {
+      color: #c8553d;
+    }
+
+    .seg-btn.on {
+      background: #fff;
+      color: #c8553d;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(120, 90, 60, .12);
+    }
+
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      color: #7d6f5e;
+      cursor: pointer;
+      user-select: none;
+      margin-left: 4px;
+    }
+
+    .switch input {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 34px;
+      height: 19px;
+      border-radius: 999px;
+      background: #e5d9c8;
+      position: relative;
+      cursor: pointer;
+      transition: background .16s;
+      margin: 0;
+      flex: 0 0 auto;
+    }
+
+    .switch input::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform .16s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
+    }
+
+    .switch input:checked {
+      background: #c8553d;
+    }
+
+    .switch input:checked::after {
+      transform: translateX(15px);
+    }
+
+    /* ===== 组合网格 ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1.5px solid #ece1d1;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color .16s, background .16s, box-shadow .16s, transform .16s;
+    }
+
+    .card:hover {
+      border-color: #e0c9ac;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(120, 90, 60, .09);
+    }
+
+    .card.on {
+      border-color: #c8553d;
+      background: #fdf3ef;
+    }
+
+    /* 自定义复选框 */
+    .card input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      border: 2px solid #d8c9b4;
+      border-radius: 5px;
+      background: #fff;
+      position: relative;
+      cursor: pointer;
+      transition: background .16s, border-color .16s;
+    }
+
+    .card input[type="checkbox"]:checked {
+      background: #c8553d;
+      border-color: #c8553d;
+    }
+
+    .card input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 4.5px;
+      top: 1px;
+      width: 4px;
+      height: 8.5px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .num {
+      flex: 0 0 auto;
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
+      color: #bcae9b;
+      letter-spacing: .5px;
+    }
+
+    .card.on .num {
+      color: #d79a8b;
+    }
+
+    .names {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      font-size: 14.5px;
+      line-height: 1.45;
+    }
+
+    .names .ing {
+      font-weight: 500;
+    }
+
+    .card.on .names .ing {
+      color: #a8412c;
+    }
+
+    .names .plus {
+      color: #c9b8a2;
+      font-size: 12px;
+    }
+
+    .empty {
+      display: none;
+      text-align: center;
+      padding: 44px 0;
+      color: #b7a894;
+      font-size: 14px;
+      letter-spacing: .5px;
+    }
+
+    footer {
+      margin-top: 34px;
+      text-align: center;
+      font-size: 12.5px;
+      color: #b7a894;
+      letter-spacing: .5px;
+    }
+  </style>
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <h1>三拼<span>组合</span> · 可重复</h1>
-    <p class="sub">
-      8 种食材 · 每三个一组（允许重复） · 共 <b id="total">0</b> 组<br>
-      重复次数越多排得越靠前：三个相同 → 两个相同 → 三个不同 · 勾选状态自动保存
-    </p>
-  </header>
 
-  <div class="toolbar">
-    <span class="count">已选 <b id="selCount">0</b> 组</span>
-    <button class="btn" id="selectAll" type="button">全选</button>
-    <button class="btn" id="clearAll" type="button">清空</button>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>三拼<span>组合</span> · 可重复 · 筛选版</h1>
+      <p class="sub">
+        8 种食材 · 每三个一组（允许重复） · 共 <b id="total">0</b> 组<br>
+        重复次数越多排得越靠前：三个相同 → 两个相同 → 三个不同 · 勾选与筛选状态自动保存
+      </p>
+    </header>
+
+    <div class="toolbar">
+      <span class="count">
+        显示 <b id="visibleCount">0</b> 组 · 已选 <b id="selCount">0</b> 组
+      </span>
+      <button class="btn" id="selectAll" type="button">全选当前筛选</button>
+      <button class="btn" id="clearAll" type="button">清空已选</button>
+    </div>
+
+    <!-- 筛选区 -->
+    <div class="filters">
+      <div class="filter-row">
+        <span class="filter-label">食材（包含任一）</span>
+        <div class="chips" id="ingChips"></div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">重复类型</span>
+        <div class="seg" id="repeatSeg">
+          <button type="button" class="seg-btn" data-repeat="all">全部</button>
+          <button type="button" class="seg-btn" data-repeat="3">三个相同</button>
+          <button type="button" class="seg-btn" data-repeat="2">两个相同</button>
+          <button type="button" class="seg-btn" data-repeat="1">三个不同</button>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="onlySelected">
+          <span>只看已选</span>
+        </label>
+        <button class="btn" id="resetFilter" type="button">重置筛选</button>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="emptyTip">没有符合条件的组合，试试调整筛选条件～</div>
+
+    <footer>勾选与筛选结果保存在本机浏览器中，刷新或关闭页面后依然保留</footer>
   </div>
 
-  <div class="grid" id="grid"></div>
+  <script>
+    (function () {
+      "use strict";
 
-  <footer>勾选结果保存在本机浏览器中，刷新或关闭页面后依然保留</footer>
-</div>
+      /* ---------- 数据 ---------- */
+      var INGREDIENTS = ['五花肉', '豆腐', '莲藕', '笋', '香菇', '河虾', '糯米', '年糕'];
+      var STORAGE_KEY = 'ingredient-triple-combos-with-repetition-v1';
+      var FILTER_KEY = 'ingredient-triple-combos-filter-v1';
 
-<script>
-(function () {
-  "use strict";
-
-  /* ---------- 数据 ---------- */
-  var INGREDIENTS = ['五花肉', '豆腐', '莲藕', '笋', '香菇', '河虾', '糯米', '年糕'];
-  var STORAGE_KEY = 'ingredient-triple-combos-with-repetition-v1';
-
-  // 生成全部可重复组合：i <= j <= k，共 C(8+3-1,3) = 120 种
-  var combos = [];
-  for (var i = 0; i < INGREDIENTS.length; i++) {
-    for (var j = i; j < INGREDIENTS.length; j++) {
-      for (var k = j; k < INGREDIENTS.length; k++) {
-        var maxFreq = 1;
-        if (i === j && j === k) {
-          maxFreq = 3;
-        } else if (i === j || j === k) {
-          maxFreq = 2;
+      // 生成全部可重复组合：i <= j <= k，共 C(8+3-1,3) = 120 种
+      var combos = [];
+      for (var i = 0; i < INGREDIENTS.length; i++) {
+        for (var j = i; j < INGREDIENTS.length; j++) {
+          for (var k = j; k < INGREDIENTS.length; k++) {
+            var maxFreq = 1;
+            if (i === j && j === k) {
+              maxFreq = 3;
+            } else if (i === j || j === k) {
+              maxFreq = 2;
+            }
+            combos.push({
+              indices: [i, j, k],
+              sig: i + '-' + j + '-' + k,
+              maxFreq: maxFreq
+            });
+          }
         }
-        combos.push({
-          indices: [i, j, k],
-          sig: i + '-' + j + '-' + k,
-          maxFreq: maxFreq
+      }
+
+      // 排序：重复次数降序；同重复次数按字典序升序
+      combos.sort(function (a, b) {
+        if (a.maxFreq !== b.maxFreq) return b.maxFreq - a.maxFreq;
+        for (var n = 0; n < 3; n++) {
+          if (a.indices[n] !== b.indices[n]) return a.indices[n] - b.indices[n];
+        }
+        return 0;
+      });
+
+      // 有效签名集合，用于过滤本地存储
+      var validSigs = {};
+      combos.forEach(function (c) { validSigs[c.sig] = true; });
+
+      /* ---------- 状态 ---------- */
+      var selected = {};   // { 组合签名: true }
+
+      var filter = {
+        ingredients: [],   // 选中的食材索引（任一匹配）
+        repeat: 'all',     // 'all' | '3' | '2' | '1'
+        onlySelected: false
+      };
+
+      /* ---------- 存储：勾选 ---------- */
+      function loadFromStorage() {
+        selected = {};
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          var arr = JSON.parse(raw);
+          if (!Array.isArray(arr)) return;
+          arr.forEach(function (sig) {
+            if (validSigs[sig]) selected[sig] = true;
+          });
+        } catch (e) {
+          selected = {};
+        }
+      }
+
+      function saveToStorage() {
+        try {
+          var arr = Object.keys(selected).filter(function (sig) {
+            return validSigs[sig];
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+        } catch (e) { /* 隐私模式等场景下静默失败 */ }
+      }
+
+      /* ---------- 存储：筛选 ---------- */
+      function loadFilter() {
+        filter = { ingredients: [], repeat: 'all', onlySelected: false };
+        try {
+          var raw = localStorage.getItem(FILTER_KEY);
+          if (!raw) return;
+          var f = JSON.parse(raw);
+          if (!f || typeof f !== 'object') return;
+          if (Array.isArray(f.ingredients)) {
+            filter.ingredients = f.ingredients.filter(function (x) {
+              return typeof x === 'number' && x >= 0 && x < INGREDIENTS.length;
+            });
+          }
+          if (['all', '3', '2', '1'].indexOf(f.repeat) !== -1) {
+            filter.repeat = f.repeat;
+          }
+          filter.onlySelected = !!f.onlySelected;
+        } catch (e) {
+          filter = { ingredients: [], repeat: 'all', onlySelected: false };
+        }
+      }
+
+      function saveFilter() {
+        try {
+          localStorage.setItem(FILTER_KEY, JSON.stringify(filter));
+        } catch (e) { /* 静默失败 */ }
+      }
+
+      /* ---------- 筛选判断 ---------- */
+      function matches(combo) {
+        // 食材：选中集合非空时，组合中至少包含一个
+        if (filter.ingredients.length) {
+          var hit = false;
+          for (var n = 0; n < combo.indices.length; n++) {
+            if (filter.ingredients.indexOf(combo.indices[n]) !== -1) {
+              hit = true;
+              break;
+            }
+          }
+          if (!hit) return false;
+        }
+        // 重复类型
+        if (filter.repeat !== 'all') {
+          if (combo.maxFreq !== Number(filter.repeat)) return false;
+        }
+        // 只看已选
+        if (filter.onlySelected && !selected[combo.sig]) return false;
+        return true;
+      }
+
+      /* ---------- DOM ---------- */
+      var grid = document.getElementById('grid');
+      var totalEl = document.getElementById('total');
+      var visibleCountEl = document.getElementById('visibleCount');
+      var selCountEl = document.getElementById('selCount');
+      var emptyTip = document.getElementById('emptyTip');
+      var chipsBox = document.getElementById('ingChips');
+      var segBtns = Array.prototype.slice.call(
+        document.querySelectorAll('#repeatSeg .seg-btn')
+      );
+      var onlySelectedCb = document.getElementById('onlySelected');
+
+      var cards = [];  // { el, cb, sig, combo }
+      var chips = [];  // chip 元素
+
+      function pad3(n) {
+        if (n < 10) return '00' + n;
+        if (n < 100) return '0' + n;
+        return String(n);
+      }
+
+      /* ---------- 构建食材筛选按钮 ---------- */
+      function buildChips() {
+        INGREDIENTS.forEach(function (name, idx) {
+          var chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'chip';
+          chip.dataset.idx = String(idx);
+          chip.textContent = name;
+
+          chip.addEventListener('click', function () {
+            var pos = filter.ingredients.indexOf(idx);
+            if (pos === -1) {
+              filter.ingredients.push(idx);
+            } else {
+              filter.ingredients.splice(pos, 1);
+            }
+            chip.classList.toggle('on', filter.ingredients.indexOf(idx) !== -1);
+            saveFilter();
+            applyFilter();
+          });
+
+          chips.push(chip);
+          chipsBox.appendChild(chip);
         });
       }
-    }
-  }
 
-  // 排序：重复次数降序；同重复次数按字典序升序
-  combos.sort(function (a, b) {
-    if (a.maxFreq !== b.maxFreq) return b.maxFreq - a.maxFreq;
-    for (var n = 0; n < 3; n++) {
-      if (a.indices[n] !== b.indices[n]) return a.indices[n] - b.indices[n];
-    }
-    return 0;
-  });
+      /* ---------- 构建组合卡片 ---------- */
+      function buildUI() {
+        var frag = document.createDocumentFragment();
 
-  // 有效签名集合，用于过滤本地存储
-  var validSigs = {};
-  combos.forEach(function (c) { validSigs[c.sig] = true; });
+        combos.forEach(function (combo, idx) {
+          var card = document.createElement('label');
+          card.className = 'card';
+          card.dataset.sig = combo.sig;
 
-  /* ---------- 本地存储读写 ---------- */
-  var selected = {};   // { 组合签名: true }
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.setAttribute(
+            'aria-label',
+            combo.indices.map(function (x) { return INGREDIENTS[x]; }).join('、')
+          );
 
-  function loadFromStorage() {
-    selected = {};
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      var arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return;
-      arr.forEach(function (sig) {
-        if (validSigs[sig]) selected[sig] = true;
-      });
-    } catch (e) {
-      selected = {};
-    }
-  }
+          var num = document.createElement('span');
+          num.className = 'num';
+          num.textContent = pad3(idx + 1);
 
-  function saveToStorage() {
-    try {
-      var arr = Object.keys(selected).filter(function (sig) {
-        return validSigs[sig];
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-    } catch (e) {
-      /* 隐私模式等场景下静默失败 */
-    }
-  }
+          var names = document.createElement('span');
+          names.className = 'names';
+          names.innerHTML = combo.indices.map(function (x) {
+            return '<span class="ing">' + INGREDIENTS[x] + '</span>';
+          }).join('<span class="plus">+</span>');
 
-  /* ---------- 渲染 ---------- */
-  var grid = document.getElementById('grid');
-  var selCountEl = document.getElementById('selCount');
-  var totalEl = document.getElementById('total');
-  var cards = [];   // { el, cb, sig }
+          card.appendChild(cb);
+          card.appendChild(num);
+          card.appendChild(names);
 
-  function pad3(n) {
-    if (n < 10) return '00' + n;
-    if (n < 100) return '0' + n;
-    return String(n);
-  }
+          cb.addEventListener('change', function () {
+            if (cb.checked) {
+              selected[combo.sig] = true;
+            } else {
+              delete selected[combo.sig];
+            }
+            card.classList.toggle('on', cb.checked);
+            saveToStorage();
+            updateCount();
+            // 开启「只看已选」时，取消勾选后应立即隐藏
+            if (filter.onlySelected) applyFilter();
+          });
 
-  function buildUI() {
-    var frag = document.createDocumentFragment();
+          cards.push({ el: card, cb: cb, sig: combo.sig, combo: combo });
+          frag.appendChild(card);
+        });
 
-    combos.forEach(function (combo, idx) {
-      var card = document.createElement('label');
-      card.className = 'card';
-      card.dataset.sig = combo.sig;
+        grid.appendChild(frag);
+        totalEl.textContent = combos.length;
+      }
 
-      var cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.setAttribute(
-        'aria-label',
-        combo.indices.map(function (x) { return INGREDIENTS[x]; }).join('、')
-      );
+      /* ---------- 筛选 UI 同步 ---------- */
+      function refreshFilterControls() {
+        chips.forEach(function (chip) {
+          var idx = Number(chip.dataset.idx);
+          chip.classList.toggle('on', filter.ingredients.indexOf(idx) !== -1);
+        });
+        segBtns.forEach(function (btn) {
+          btn.classList.toggle('on', btn.dataset.repeat === filter.repeat);
+        });
+        onlySelectedCb.checked = filter.onlySelected;
+      }
 
-      var num = document.createElement('span');
-      num.className = 'num';
-      num.textContent = pad3(idx + 1);
+      /* ---------- 应用筛选 ---------- */
+      function applyFilter() {
+        var visible = 0;
+        cards.forEach(function (item) {
+          var show = matches(item.combo);
+          item.el.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        visibleCountEl.textContent = visible;
+        emptyTip.style.display = visible === 0 ? 'block' : 'none';
+      }
 
-      var names = document.createElement('span');
-      names.className = 'names';
-      names.innerHTML = combo.indices.map(function (x) {
-        return '<span class="ing">' + INGREDIENTS[x] + '</span>';
-      }).join('<span class="plus">+</span>');
-
-      card.appendChild(cb);
-      card.appendChild(num);
-      card.appendChild(names);
-
-      cb.addEventListener('change', function () {
-        if (cb.checked) {
-          selected[combo.sig] = true;
-        } else {
-          delete selected[combo.sig];
-        }
-        card.classList.toggle('on', cb.checked);
-        saveToStorage();
+      /* ---------- 勾选 UI 同步 ---------- */
+      function syncUI() {
+        cards.forEach(function (item) {
+          var on = !!selected[item.sig];
+          item.cb.checked = on;
+          item.el.classList.toggle('on', on);
+        });
         updateCount();
+        applyFilter();
+      }
+
+      function updateCount() {
+        selCountEl.textContent = Object.keys(selected).length;
+      }
+
+      /* ---------- 筛选事件绑定 ---------- */
+      function bindFilterEvents() {
+        // 重复类型按钮组
+        segBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            filter.repeat = btn.dataset.repeat;
+            refreshFilterControls();
+            saveFilter();
+            applyFilter();
+          });
+        });
+
+        // 只看已选
+        onlySelectedCb.addEventListener('change', function (e) {
+          filter.onlySelected = e.target.checked;
+          saveFilter();
+          applyFilter();
+        });
+
+        // 重置筛选
+        document.getElementById('resetFilter').addEventListener('click', function () {
+          filter = { ingredients: [], repeat: 'all', onlySelected: false };
+          refreshFilterControls();
+          saveFilter();
+          applyFilter();
+        });
+      }
+
+      /* ---------- 工具栏操作 ---------- */
+      document.getElementById('selectAll').addEventListener('click', function () {
+        // 只选中当前筛选结果
+        combos.forEach(function (combo) {
+          if (matches(combo)) selected[combo.sig] = true;
+        });
+        saveToStorage();
+        syncUI();
       });
 
-      cards.push({ el: card, cb: cb, sig: combo.sig });
-      frag.appendChild(card);
-    });
+      document.getElementById('clearAll').addEventListener('click', function () {
+        selected = {};
+        saveToStorage();
+        syncUI();
+      });
 
-    grid.appendChild(frag);
-    totalEl.textContent = combos.length;
-  }
+      /* ---------- 多标签页同步 ---------- */
+      window.addEventListener('storage', function (e) {
+        if (e.key === STORAGE_KEY) {
+          loadFromStorage();
+          syncUI();
+        } else if (e.key === FILTER_KEY) {
+          loadFilter();
+          refreshFilterControls();
+          applyFilter();
+        }
+      });
 
-  // 依据 selected 同步所有复选框界面
-  function syncUI() {
-    cards.forEach(function (item) {
-      var on = !!selected[item.sig];
-      item.cb.checked = on;
-      item.el.classList.toggle('on', on);
-    });
-    updateCount();
-  }
-
-  function updateCount() {
-    selCountEl.textContent = Object.keys(selected).length;
-  }
-
-  /* ---------- 工具栏操作 ---------- */
-  document.getElementById('selectAll').addEventListener('click', function () {
-    selected = {};
-    combos.forEach(function (c) { selected[c.sig] = true; });
-    saveToStorage();
-    syncUI();
-  });
-
-  document.getElementById('clearAll').addEventListener('click', function () {
-    selected = {};
-    saveToStorage();
-    syncUI();
-  });
-
-  /* ---------- 多标签页同步 ---------- */
-  window.addEventListener('storage', function (e) {
-    if (e.key !== STORAGE_KEY) return;
-    loadFromStorage();
-    syncUI();
-  });
-
-  /* ---------- 启动 ---------- */
-  loadFromStorage();
-  buildUI();
-  syncUI();
-})();
-</script>
+      /* ---------- 启动 ---------- */
+      loadFromStorage();
+      loadFilter();
+      buildChips();
+      bindFilterEvents();
+      buildUI();
+      refreshFilterControls();
+      syncUI();
+    })();
+  </script>
 </body>
+
 </html>
