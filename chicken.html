@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>三拼组合 · 可重复 · 筛选版</title>
+  <title>三拼组合 · 可重复 · 筛选版（且关系）</title>
   <style>
     * {
       box-sizing: border-box;
@@ -348,10 +348,18 @@
     .empty {
       display: none;
       text-align: center;
-      padding: 44px 0;
+      padding: 44px 20px;
       color: #b7a894;
       font-size: 14px;
       letter-spacing: .5px;
+      line-height: 1.8;
+    }
+
+    .empty .hint {
+      display: block;
+      margin-top: 6px;
+      font-size: 12.5px;
+      color: #c9b8a2;
     }
 
     footer {
@@ -370,7 +378,8 @@
       <h1>三拼<span>组合</span> · 可重复 · 筛选版</h1>
       <p class="sub">
         8 种食材 · 每三个一组（允许重复） · 共 <b id="total">0</b> 组<br>
-        重复次数越多排得越靠前：三个相同 → 两个相同 → 三个不同 · 勾选与筛选状态自动保存
+        重复次数越多排得越靠前：三个相同 → 两个相同 → 三个不同<br>
+        筛选规则：食材需<b>全部包含</b>（且关系），重复类型与「只看已选」也同时生效
       </p>
     </header>
 
@@ -385,7 +394,7 @@
     <!-- 筛选区 -->
     <div class="filters">
       <div class="filter-row">
-        <span class="filter-label">食材（包含任一）</span>
+        <span class="filter-label">食材（需全部包含）</span>
         <div class="chips" id="ingChips"></div>
       </div>
       <div class="filter-row">
@@ -405,7 +414,10 @@
     </div>
 
     <div class="grid" id="grid"></div>
-    <div class="empty" id="emptyTip">没有符合条件的组合，试试调整筛选条件～</div>
+    <div class="empty" id="emptyTip">
+      <span class="main">没有符合条件的组合，试试调整筛选条件～</span>
+      <span class="hint">小提示：一组只有 3 个位置，食材筛选最多选 3 个</span>
+    </div>
 
     <footer>勾选与筛选结果保存在本机浏览器中，刷新或关闭页面后依然保留</footer>
   </div>
@@ -456,7 +468,7 @@
       var selected = {};   // { 组合签名: true }
 
       var filter = {
-        ingredients: [],   // 选中的食材索引（任一匹配）
+        ingredients: [],   // 选中的食材索引（且关系：全部包含）
         repeat: 'all',     // 'all' | '3' | '2' | '1'
         onlySelected: false
       };
@@ -495,8 +507,12 @@
           var f = JSON.parse(raw);
           if (!f || typeof f !== 'object') return;
           if (Array.isArray(f.ingredients)) {
+            var seen = {};
             filter.ingredients = f.ingredients.filter(function (x) {
-              return typeof x === 'number' && x >= 0 && x < INGREDIENTS.length;
+              if (typeof x !== 'number' || x < 0 || x >= INGREDIENTS.length) return false;
+              if (seen[x]) return false;
+              seen[x] = true;
+              return true;
             });
           }
           if (['all', '3', '2', '1'].indexOf(f.repeat) !== -1) {
@@ -514,18 +530,15 @@
         } catch (e) { /* 静默失败 */ }
       }
 
-      /* ---------- 筛选判断 ---------- */
+      /* ---------- 筛选判断（且关系） ---------- */
       function matches(combo) {
-        // 食材：选中集合非空时，组合中至少包含一个
+        // 食材：选中集合非空时，组合必须包含全部选中食材（且关系）
         if (filter.ingredients.length) {
-          var hit = false;
-          for (var n = 0; n < combo.indices.length; n++) {
-            if (filter.ingredients.indexOf(combo.indices[n]) !== -1) {
-              hit = true;
-              break;
+          for (var n = 0; n < filter.ingredients.length; n++) {
+            if (combo.indices.indexOf(filter.ingredients[n]) === -1) {
+              return false;
             }
           }
-          if (!hit) return false;
         }
         // 重复类型
         if (filter.repeat !== 'all') {
@@ -542,6 +555,8 @@
       var visibleCountEl = document.getElementById('visibleCount');
       var selCountEl = document.getElementById('selCount');
       var emptyTip = document.getElementById('emptyTip');
+      var emptyMain = emptyTip.querySelector('.main');
+      var emptyHint = emptyTip.querySelector('.hint');
       var chipsBox = document.getElementById('ingChips');
       var segBtns = Array.prototype.slice.call(
         document.querySelectorAll('#repeatSeg .seg-btn')
@@ -573,6 +588,7 @@
             } else {
               filter.ingredients.splice(pos, 1);
             }
+            filter.ingredients.sort(function (a, b) { return a - b; });
             chip.classList.toggle('on', filter.ingredients.indexOf(idx) !== -1);
             saveFilter();
             applyFilter();
@@ -655,7 +671,20 @@
           if (show) visible++;
         });
         visibleCountEl.textContent = visible;
-        emptyTip.style.display = visible === 0 ? 'block' : 'none';
+
+        if (visible === 0) {
+          emptyTip.style.display = 'block';
+          if (filter.ingredients.length > 3) {
+            emptyMain.textContent =
+              '当前选中了 ' + filter.ingredients.length + ' 种食材，无法同时放入一组 3 个位置';
+            emptyHint.textContent = '请减少食材筛选数量（最多 3 个），或放宽其他筛选条件';
+          } else {
+            emptyMain.textContent = '没有符合条件的组合，试试调整筛选条件～';
+            emptyHint.textContent = '小提示：一组只有 3 个位置，食材筛选最多选 3 个';
+          }
+        } else {
+          emptyTip.style.display = 'none';
+        }
       }
 
       /* ---------- 勾选 UI 同步 ---------- */
